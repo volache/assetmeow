@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AssetMeow | 財產管理資訊整合系統</title>
+  <title>AssetMeow 啟動中…</title>
   <meta name="theme-color" content="#A67755" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="https://i.imgur.com/33ce4nl.png" />
+  <link rel="icon" href="icon-192.png" />
   <style>
     body {
       margin: 0; background: #f5e8d3;
@@ -15,31 +15,56 @@
       align-items: center; justify-content: center;
       height: 100vh; text-align: center;
     }
-    .logo { width: 120px; animation: fadeIn 1s ease-in-out; }
-    h1 { color: #7c5b42; margin-top: 1rem; font-size: 1.7rem; }
-    p { color: #856f58; margin-top: 0.5rem; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
+    .logo { width: 120px; }
+    .btn { padding: 0.6em 1.5em; margin: 1em; border: none; font-size: 1rem; cursor: pointer; border-radius: 6px; }
+    .btn-install { background: #a67755; color: white; }
+    .btn-skip { background: #ddd; color: #555; }
+
+    @keyframes fadeInFloat {
+      0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .logo {
+      width: 120px;
+      animation: fadeInFloat 1.2s ease-out;
     }
   </style>
 </head>
 <body>
   <img src="https://i.imgur.com/ORNA2rx.png" class="logo" alt="AssetMeow Logo" />
   <h1>AssetMeow</h1>
-  <p>正在啟動財產管理系統，請稍候…</p>
+  <p>是否要將系統安裝到桌面？</p>
+  <button class="btn btn-install" onclick="installApp()">📲 安裝 AssetMeow</button>
+  <button class="btn btn-skip" onclick="goToSystem()">🚀 稍後再說</button>
 
   <script>
+    let deferredPrompt;
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log("✅ SW registered"))
-        .catch(err => console.error("❌ SW error", err));
+      navigator.serviceWorker.register('service-worker.js');
     }
 
-    // 自動導向 Google Apps Script 系統
-    setTimeout(() => {
-      location.href = "https://script.google.com/macros/s/AKfycbw93VGk0ORkhOwPeo9yRb-d2dfJbu2XUl886Q0KDgrBbwjfy6fQl1ZKb3Y_FfDNAPSL/exec?page=Home";
-    }, 2000);
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.querySelector('.btn-install').style.display = 'inline-block';
+    });
+
+    function installApp() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(choiceResult => {
+          console.log('使用者選擇：', choiceResult.outcome);
+          if (choiceResult.outcome !== 'accepted') {
+            goToSystem(); // 使用者拒絕仍導向
+          }
+        });
+      }
+    }
+
+    function goToSystem() {
+      location.href = "https://script.google.com/macros/s/你的ID/exec?page=Home";
+    }
   </script>
 </body>
 </html>
