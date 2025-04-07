@@ -6,7 +6,7 @@
   <title>AssetMeow 啟動中…</title>
   <meta name="theme-color" content="#A67755" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon-192.png" />
+  <link rel="icon" href="https://i.imgur.com/33ce4nl.png" />
   <style>
     body {
       margin: 0; background: #f5e8d3;
@@ -15,8 +15,15 @@
       align-items: center; justify-content: center;
       height: 100vh; text-align: center;
     }
-    .logo { width: 120px; }
-    .btn { padding: 0.6em 1.5em; margin: 1em; border: none; font-size: 1rem; cursor: pointer; border-radius: 6px; }
+    .logo {
+      width: 120px;
+      animation: fadeInFloat 1.2s ease-out;
+    }
+    .btn {
+      padding: 0.6em 1.5em; margin: 1em;
+      border: none; font-size: 1rem;
+      cursor: pointer; border-radius: 6px;
+    }
     .btn-install { background: #a67755; color: white; }
     .btn-skip { background: #ddd; color: #555; }
 
@@ -24,9 +31,21 @@
       0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .logo {
-      width: 120px;
-      animation: fadeInFloat 1.2s ease-out;
+
+    @keyframes spin {
+      0% { transform: rotate(0); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      margin-top: 2em;
+      width: 32px;
+      height: 32px;
+      border: 4px solid #a67755;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: none;
     }
   </style>
 </head>
@@ -36,6 +55,7 @@
   <p>是否要將系統安裝到桌面？</p>
   <button class="btn btn-install" onclick="installApp()">📲 安裝 AssetMeow</button>
   <button class="btn btn-skip" onclick="goToSystem()">🚀 稍後再說</button>
+  <div class="spinner" id="spinner"></div>
 
   <script>
     let deferredPrompt;
@@ -47,6 +67,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
+      console.log("📲 可安裝事件捕捉成功");
       document.querySelector('.btn-install').style.display = 'inline-block';
     });
 
@@ -55,15 +76,31 @@
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(choiceResult => {
           console.log('使用者選擇：', choiceResult.outcome);
-          if (choiceResult.outcome !== 'accepted') {
-            goToSystem(); // 使用者拒絕仍導向
+          if (choiceResult.outcome === 'accepted') {
+            console.log("✅ 使用者已安裝");
+            showSpinner();
+            setTimeout(() => {
+              goToSystem();
+            }, 2000);
+          } else {
+            console.log("❌ 使用者拒絕安裝");
+            alert("您已選擇略過安裝，稍後仍可透過瀏覽器選單加入主畫面。");
+            goToSystem();
           }
+          deferredPrompt = null;
         });
+      } else {
+        console.warn("⚠️ 無法顯示安裝提示");
+        alert("⚠️ 無法顯示安裝提示，請確認您不是在無痕模式，並使用支援 PWA 的瀏覽器（如 Chrome）。");
       }
     }
 
     function goToSystem() {
-      location.href = "https://script.google.com/macros/s/你的ID/exec?page=Home";
+      location.href = "https://script.google.com/macros/s/AKfycbw93VGk0ORkhOwPeo9yRb-d2dfJbu2XUl886Q0KDgrBbwjfy6fQl1ZKb3Y_FfDNAPSL/exec";
+    }
+
+    function showSpinner() {
+      document.getElementById("spinner").style.display = "block";
     }
   </script>
 </body>
