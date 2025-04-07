@@ -1,7 +1,11 @@
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open("assetmeow-v1").then(cache =>
-      cache.addAll(["/", "index.html", "icon-192.png"])
+      cache.addAll([
+        "/assetmeow/",
+        "/assetmeow/index.html",
+        "/assetmeow/icon-192.png"
+      ])
     )
   );
 });
