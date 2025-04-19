@@ -1,165 +1,41 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AssetMeow 啟動中…</title>
-  <meta name="theme-color" content="#A67755" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon-192.png" />
-  <style>
-    body {
-      margin: 0;
-      background: #f5e8d3;
-      font-family: "Segoe UI", sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-    }
-    h1 { color: #7c5b42;  /* 更深一點的主標色 */ } 
-    p { color: #856f58; margin-top: 0.5rem; }
-    .logo {
-      width: 120px;
-      animation: fadeInFloat 1.2s ease-out;
-    }
-
-    .btn {
-      padding: 0.6em 1.5em;
-      margin: 1em;
-      border: none;
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .btn-install {
-      background: #a67755;
-      color: white;
-    }
-
-    .btn-skip {
-      background: #ddd;
-      color: #555;
-    }
-
-    @keyframes fadeInFloat {
-      0% {
-        opacity: 0;
-        transform: translateY(20px) scale(0.95);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .spinner {
-      margin-top: 2em;
-      width: 32px;
-      height: 32px;
-      border: 4px solid #a67755;
-      border-top: 4px solid transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      display: none;
-    }
-
-    .ios-tip {
-      margin: 1em 1.5em;
-      padding: 0.5em 1em;
-      background: #fff7e2;
-      border: 1px solid #a67755;
-      border-radius: 6px;
-      color: #5c4633;
-      font-size: 0.9em;
-      display: none;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    }
-  </style>
+  <title>登入系統</title>
+  <script src="js/api.js"></script>
 </head>
 <body>
-  <img src="icon-192.png" class="logo" alt="AssetMeow Logo" />
-  <h1>AssetMeow</h1>
-  <p>是否要將系統安裝到桌面？</p>
-  <button class="btn btn-install" onclick="installApp()">📲 安裝 AssetMeow</button>
-  <button class="btn btn-skip" onclick="goToSystem()">🚀 稍後再說</button>
-  <div class="spinner" id="spinner"></div>
-  <div id="ios-tip" class="ios-tip">請使用 Safari → 點選分享 → 加入主畫面，即可安裝 AssetMeow！</div>
+  <h1>登入系統</h1>
+  <form id="loginForm">
+    <label for="account">帳號：</label>
+    <input type="text" id="account" required />
+    <label for="password">密碼：</label>
+    <input type="password" id="password" required />
+    <button type="submit">登入</button>
+    <div class="status-message" id="statusMessage"></div>
+  </form>
 
   <script>
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true;
+    const form = document.getElementById("loginForm");
+    const msg = document.getElementById("statusMessage");
 
-    const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    const visited = localStorage.getItem("hasVisited");
-
-    if (isStandalone) {
-      // 已從主畫面啟動，直接跳轉
-      location.href = "https://script.google.com/macros/s/AKfycbw93VGk0ORkhOwPeo9yRb-d2dfJbu2XUl886Q0KDgrBbwjfy6fQl1ZKb3Y_FfDNAPSL/exec?page=Home";
-    } else if (visited) {
-      // 非首次，直接跳過畫面
-      goToSystem();
-    } else {
-      // 首次訪問，設置旗標
-      localStorage.setItem("hasVisited", "true");
-    }
-
-    let deferredPrompt;
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-
-    window.addEventListener("beforeinstallprompt", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      deferredPrompt = e;
-      document.querySelector(".btn-install").style.display = "inline-block";
-    });
+      msg.textContent = "登入中...";
+      const account = form.account.value.trim();
+      const password = form.password.value;
+      const hash = await sha256(password);
+      const result = await callGASAPI("login", { account, passwordHash: hash });
 
-    if (isIOS() && !isStandalone) {
-      document.getElementById("ios-tip").style.display = "block";
-    }
-
-    function installApp() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(choiceResult => {
-          if (choiceResult.outcome === "accepted") {
-            showSpinner();
-            setTimeout(() => {
-              goToSystem();
-            }, 1500);
-          } else {
-            alert("您尚未安裝 AssetMeow，稍後仍可加入主畫面。");
-            goToSystem();
-          }
-          deferredPrompt = null;
-        });
+      if (result.success) {
+        msg.textContent = "✅ 登入成功，導向中...";
+        window.location.href = "admin.html";
       } else {
-        alert("⚠️ 無法顯示安裝提示，請使用支援 PWA 的瀏覽器（如 Chrome），或手動加入主畫面。");
+        msg.textContent = "❗ " + result.message;
       }
-    }
-
-    function goToSystem() {
-      document.getElementById("spinner").style.display = "block";
-      setTimeout(() => {
-        location.href = "https://script.google.com/macros/s/AKfycbw93VGk0ORkhOwPeo9yRb-d2dfJbu2XUl886Q0KDgrBbwjfy6fQl1ZKb3Y_FfDNAPSL/exec?page=Home";
-      }, 1000);
-    }
-
-    function showSpinner() {
-      document.getElementById("spinner").style.display = "block";
-    }
+    });
   </script>
 </body>
 </html>
