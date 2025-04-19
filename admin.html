@@ -1,41 +1,51 @@
-<!-- index.html -->
+<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>登入系統</title>
+  <title>系統管理後台</title>
   <script src="js/api.js"></script>
 </head>
 <body>
-  <h1>登入系統</h1>
-  <form id="loginForm">
-    <label for="account">帳號：</label>
-    <input type="text" id="account" required />
-    <label for="password">密碼：</label>
-    <input type="password" id="password" required />
-    <button type="submit">登入</button>
-    <div class="status-message" id="statusMessage"></div>
+  <h2>初始化</h2>
+  <button id="initBtn">初始化系統</button>
+  <div id="initStatus"></div>
+
+  <h2>新增使用者</h2>
+  <form id="userForm">
+    <input placeholder="帳號" id="username" required />
+    <input placeholder="密碼" type="password" id="password" required />
+    <input placeholder="確認密碼" type="password" id="confirmPassword" required />
+    <input placeholder="姓名" id="name" />
+    <button type="submit">新增</button>
+    <div id="userStatus"></div>
   </form>
 
   <script>
-    const form = document.getElementById("loginForm");
-    const msg = document.getElementById("statusMessage");
+    document.getElementById("initBtn").onclick = async () => {
+      const res = await callGASAPI("initializeSystem");
+      document.getElementById("initStatus").textContent = res.message || res.error;
+    };
 
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("userForm").onsubmit = async (e) => {
       e.preventDefault();
-      msg.textContent = "登入中...";
-      const account = form.account.value.trim();
-      const password = form.password.value;
-      const hash = await sha256(password);
-      const result = await callGASAPI("login", { account, passwordHash: hash });
-
-      if (result.success) {
-        msg.textContent = "✅ 登入成功，導向中...";
-        window.location.href = "admin.html";
-      } else {
-        msg.textContent = "❗ " + result.message;
-      }
-    });
+      const pwd = password.value;
+      const confirm = confirmPassword.value;
+      if (pwd !== confirm) return alert("密碼不一致");
+      const user = {
+        username: username.value,
+        passwordHash: await sha256(pwd),
+        name: name.value,
+        unit: "",
+        title: "",
+        email: "",
+        role: "使用者",
+        status: "啟用",
+        note: ""
+      };
+      const res = await callGASAPI("addUser", user);
+      document.getElementById("userStatus").textContent = res.message || res.error;
+    };
   </script>
 </body>
 </html>
