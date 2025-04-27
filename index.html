@@ -36,7 +36,7 @@
 
     // 呼叫 Google Apps Script Web API
     function fetchData() {
-      fetch('https://script.google.com/macros/s/你的GAS部署ID/exec')
+      fetch('https://script.google.com/macros/s/AKfycbxNEOqNk1_nrhAJdXKo4stXMjGx-lmEK2njOkI85cPIlSq60yoBeS6Dm4nm4FjFzhwn/exec')
         .then(response => response.json())
         .then(data => {
           document.getElementById('data').textContent = '回傳資料：' + JSON.stringify(data);
