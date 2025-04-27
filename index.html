@@ -1,41 +1,48 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <title>登入系統</title>
-  <script src="js/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的小型 PWA App</title>
+
+  <!-- 引用 manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+
+  <!-- PWA 必備：讓 Safari 支援 PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#4CAF50">
 </head>
+
 <body>
-  <h1>登入系統</h1>
-  <form id="loginForm">
-    <label for="account">帳號：</label>
-    <input type="text" id="account" required />
-    <label for="password">密碼：</label>
-    <input type="password" id="password" required />
-    <button type="submit">登入</button>
-    <div class="status-message" id="statusMessage"></div>
-  </form>
+  <h1>🌟 歡迎來到我的 PWA 網頁 App！</h1>
+  <p id="data">（這裡會顯示從 Google Apps Script 撈回的資料）</p>
+
+  <button onclick="fetchData()">取得資料</button>
 
   <script>
-    const form = document.getElementById("loginForm");
-    const msg = document.getElementById("statusMessage");
+    // 註冊 Service Worker（讓網頁支援離線）
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => {
+          console.log('✅ Service Worker 註冊成功', registration);
+        })
+        .catch(error => {
+          console.error('❌ Service Worker 註冊失敗', error);
+        });
+    }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.textContent = "登入中...";
-      const account = form.account.value.trim();
-      const password = form.password.value;
-      const hash = await sha256(password);
-      const result = await callGASAPI("login", { account, passwordHash: hash });
-
-      if (result.success) {
-        msg.textContent = "✅ 登入成功，導向中...";
-        window.location.href = "admin.html";
-      } else {
-        msg.textContent = "❗ " + result.message;
-      }
-    });
+    // 呼叫 Google Apps Script API
+    function fetchData() {
+      fetch('https://script.google.com/macros/s/你的GAS部署ID/exec')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('data').textContent = '回傳內容：' + JSON.stringify(data);
+        })
+        .catch(error => {
+          console.error('❌ 無法取得資料', error);
+        });
+    }
   </script>
 </body>
 </html>
